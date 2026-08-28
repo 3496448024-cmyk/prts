@@ -1,0 +1,864 @@
+```html
+<!doctype html>
+<html lang="zh-CN"> <!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>明日方舟 - PRTS终端</title>
+<style>
+:root {
+  --prts-gold: #c9a227;
+  --prts-gold-dim: #8a6e1b;
+  --prts-dark: #050505;
+  --prts-panel: rgba(10,10,10,.92);
+  --prts-red: #e33;
+  --prts-red-dim: rgba(227,51,51,.35);
+  --prts-border: #2a2a2a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+html, body { width:100%; height:100%; }
+body { 
+  background: var(--prts-dark); 
+  font-family:"Consolas","Courier New",monospace; 
+  color:#ccc;
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  overflow:hidden;
+}
+
+#stage {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  background:#d8d8d4; transition:background 1.5s;
+}
+#stage.dark {
+  background: var(--prts-dark);
+  background-image: 
+    linear-gradient(rgba(201, 162, 39, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 162, 39, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* ===== 启动画面 ===== */
+#titleScreen {
+  position:absolute; inset:0; z-index:9;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background: linear-gradient(180deg, #e8e8e6 0%, #f2f2f0 45%, #d8d8d4 100%);
+}
+.title-mesh {
+  position:absolute; top:0; left:0; width:100%; height:22%;
+  background-image: 
+    linear-gradient(rgba(120,120,120,.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,120,120,.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  pointer-events:none;
+}
+.title-castle {
+  position:absolute; top: 18%; left:50%; transform:translateX(-50%);
+  width: 90px; height: 150px; opacity:.9; pointer-events:none;
+}
+.title-castle .tower {
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width: 40px; height: 100px; background:#3a3a3a;
+  clip-path: polygon(15% 0, 85% 0, 85% 8%, 100% 8%, 100% 20%, 85% 20%, 85% 100%, 15% 100%, 15% 20%, 0 20%, 0 8%, 15% 8%);
+}
+.title-castle .crown {
+  position:absolute; bottom:100px; left:50%; transform:translateX(-50%);
+  width: 8px; height: 40px; background:#3a3a3a;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.title-main {
+  position:relative; z-index:2;
+  display:flex; justify-content:center; align-items:baseline;
+  gap: 0.05em;
+  font-size: clamp(48px, 12vw, 130px);
+  font-weight: 900; color: #1a1a1a;
+  letter-spacing: 0.02em; line-height: 1; margin-top: 60px;
+  font-family: "SimHei","Microsoft YaHei","Source Han Sans CN",sans-serif;
+  text-shadow: 2px 2px 0 rgba(0,0,0,.08);
+}
+.title-back {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-40%);
+  font-size: clamp(44px, 11vw, 120px);
+  font-weight: bold; letter-spacing: 8px;
+  color: rgba(255,255,255,.85);
+  white-space: nowrap; pointer-events:none; z-index:1;
+  font-family: Georgia, serif;
+}
+.title-en {
+  position:relative; z-index:2; margin-top: 28px;
+  background: #1a1a1a; color: #e0e0e0;
+  font-size: 15px; letter-spacing: 10px;
+  padding: 5px 40px 5px 50px;
+  font-family: Georgia, serif;
+}
+#startBtn {
+  position:relative; z-index:2; margin-top: 44px;
+  background: #3a3a3a; color: #e8e8e8;
+  border: none; padding: 13px 60px;
+  font-size: 16px; letter-spacing: 6px; cursor: pointer;
+  font-family: inherit; transition:.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+#startBtn:hover { background: var(--prts-gold); color: #000; box-shadow: 0 0 20px rgba(201,162,39,.7); }
+#titleScreen.fade { opacity:0; transition:opacity 1.2s; pointer-events:none; }
+.title-footer {
+  position:absolute; bottom:0; left:0; width:100%;
+  height: 54px; background: #2a2a2a;
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  z-index:3; color:#999; font-size: 12px; letter-spacing:2px;
+}
+.title-footer .logo-mark {
+  width: 20px; height: 20px; background:#c9a227;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.title-footer .no-commercial { color:#c96a5a; }
+
+/* ===== BGM 控制 ===== */
+#bgmCtrl {
+  position:fixed; top:50px; right:16px; z-index:50;
+  width:38px; height:38px; border:1px solid var(--prts-gold-dim);
+  background:rgba(0,0,0,.6); color:var(--prts-gold);
+  cursor:pointer; display:none; align-items:center; justify-content:center;
+  font-size:16px; transition:.3s;
+  clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));
+}
+#bgmCtrl.show { display:flex; }
+#bgmCtrl:hover { border-color:var(--prts-gold); box-shadow:0 0 10px rgba(201,162,39,.4); }
+#bgmCtrl.muted { color:#555; text-decoration:line-through; }
+
+/* ===== 状态栏 ===== */
+#prtsHeader {
+  position:absolute; top:0; left:0; width:100%; height:40px;
+  background:rgba(0,0,0,0.8); border-bottom:1px solid var(--prts-gold-dim);
+  display:none; align-items:center; padding:0 20px; z-index:30;
+  font-size:12px; color:var(--prts-gold);
+}
+#prtsHeader.show { display:flex; }
+.prts-status-left { display:flex; align-items:center; gap:15px; }
+.prts-status-right { margin-left:auto; display:flex; align-items:center; gap:15px; }
+.prts-dot { width:6px; height:6px; background:var(--prts-gold); border-radius:50%; box-shadow:0 0 5px var(--prts-gold); animation:blink 2s infinite; }
+@keyframes blink { 50% { opacity:0.3; } }
+#prtsFooter {
+  position:absolute; bottom:0; left:0; width:100%; height:30px;
+  background:rgba(0,0,0,0.8); border-top:1px solid var(--prts-gold-dim);
+  display:none; align-items:center; justify-content:space-between;
+  padding:0 20px; z-index:30; font-size:11px; color:#555;
+}
+#prtsFooter.show { display:flex; }
+
+#rhodesIcon {
+  position:absolute; top:10%; left:50%; transform:translateX(-50%);
+  text-align:center; cursor:pointer; z-index:5;
+  transition:top 1.2s ease, opacity 1s; display:none;
+}
+#rhodesIcon svg { width:120px; height:120px; filter:drop-shadow(0 0 12px rgba(255,215,0,.6)); }
+#rhodesIcon p { color:#333; font-size:12px; letter-spacing:4px; margin-top:8px; }
+#stage.dark #rhodesIcon p { color:#999; }
+
+#extimg { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); max-width:70%; transition:opacity 1.5s; z-index:2; display:none; }
+canvas#fb { position:absolute; inset:0; z-index:4; pointer-events:none; }
+
+#loaderWrap {
+  position:absolute; bottom:25%; width:100%; height:4px;
+  display:none; z-index:6; align-items:center; justify-content:space-between;
+}
+.loader-half { position:relative; width:50%; height:100%; }
+.loader-fill {
+  position:absolute; top:0; width:0%; height:100%;
+  background:var(--prts-gold); box-shadow:0 0 15px var(--prts-gold);
+  transition:width .1s linear;
+}
+.loader-fill.left { right:0; }
+.loader-fill.right { left:0; }
+.loader-text-mid {
+  position:absolute; top:-35px; left:50%; transform:translateX(-50%);
+  font-size:16px; letter-spacing:4px;
+  color:var(--prts-gold); font-family:monospace;
+  text-shadow:0 0 10px rgba(201,162,39,.5);
+}
+
+.screen {
+  position:absolute; inset:0; display:none; flex-direction:column;
+  align-items:center; justify-content:center; z-index:10; padding:60px 20px; overflow-y:auto;
+}
+.screen.on { display:flex; }
+.panel {
+  position:relative; background:var(--prts-panel);
+  border:1px solid var(--prts-gold-dim);
+  padding:32px 40px; max-width:580px; width:100%;
+  box-shadow:0 0 40px rgba(201,162,39,.15);
+  clip-path:polygon(0 12px,12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px));
+  animation:panelIn .6s ease;
+}
+.panel::before, .panel::after {
+  content:''; position:absolute; width:20px; height:20px;
+  border-color:var(--prts-gold); border-style:solid; border-width:0;
+}
+.panel::before { top:2px; left:2px; border-top:2px solid; border-left:2px solid; }
+.panel::after { bottom:2px; right:2px; border-bottom:2px solid; border-right:2px solid; }
+@keyframes panelIn { from{opacity:0;transform:translateY(24px) scale(.97);filter:blur(4px)} to{opacity:1;transform:none;filter:none} }
+
+h2 { color:var(--prts-gold); letter-spacing:6px; text-align:center; margin-bottom:24px; font-size:18px; font-weight:normal; min-height:24px; }
+h2::after { content:"_"; animation:cur 1s steps(1) infinite; }
+@keyframes cur { 50%{opacity:0} }
+
+.btn {
+  display:inline-block; border:1px solid var(--prts-gold); color:var(--prts-gold);
+  padding:8px 22px; cursor:pointer; letter-spacing:3px; margin:6px; font-size:13px;
+  background:transparent; transition:all .3s; position:relative; overflow:hidden;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+}
+.btn::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(201,162,39,.2),transparent); transition:.5s; }
+.btn:hover::before { left:100%; }
+.btn:hover { background:var(--prts-gold); color:#000; box-shadow:0 0 15px rgba(201,162,39,.6); }
+.btn-back { border-color:#444; color:#666; }
+.btn-back:hover { border-color:#666; color:#aaa; background:#222; box-shadow:none; }
+
+input[type=text], textarea {
+  width:100%; background:rgba(201,162,39,.05); border:1px solid var(--prts-border);
+  border-left:2px solid var(--prts-gold-dim); color:#eee; padding:8px 12px;
+  font-family:inherit; font-size:13px; margin:6px 0; transition:border .3s,box-shadow .3s,background .3s;
+}
+input:focus, textarea:focus { outline:none; border-color:var(--prts-gold); border-left-color:var(--prts-gold); box-shadow:0 0 12px rgba(201,162,39,.35); background:rgba(201,162,39,.08); }
+textarea { height:70px; resize:vertical; }
+input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); }
+
+.feedback { margin-top:12px; padding:10px; background:rgba(201,162,39,.05); border:1px dashed #666; font-size:12px; line-height:1.6; color:#999; animation:fadeIn .4s; }
+.locked { color:var(--prts-gold); font-size:11px; margin:2px 0 10px; animation:fadeIn .5s; }
+.hint { color:#7a7a7a; font-size:11px; margin-top:8px; text-align:center; }
+.rec { border:1px solid var(--prts-border); border-left:3px solid var(--prts-gold-dim); padding:12px; margin:6px 0; font-size:12px; transition:all .3s; animation:fadeIn .6s; background:rgba(255,255,255,0.01); }
+.rec:hover { border-color:var(--prts-gold); border-left-color:var(--prts-gold); background:rgba(201,162,39,.05); }
+.rec b { color:var(--prts-gold); letter-spacing:2px; display:block; margin-bottom:4px; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.optlist div {
+  cursor:pointer; padding:12px 15px; border:1px solid var(--prts-border);
+  border-left:3px solid transparent; margin:5px 0; font-size:13px;
+  transition:all .2s; animation:fadeIn .5s backwards; position:relative; background:rgba(255,255,255,0.01);
+}
+.optlist div:hover { border-color:var(--prts-gold); border-left-color:var(--prts-gold); color:var(--prts-gold); background:rgba(201,162,39,.05); padding-left:20px; }
+.optlist div.sel { border-color:var(--prts-gold); border-left-color:var(--prts-gold); color:var(--prts-gold); background:rgba(201,162,39,.1); padding-left:20px; }
+.sub { font-size:11px; color:#888; margin-top:4px; }
+
+/* ===== PRTS 高级警报 ===== */
+#alertOverlay {
+  position:absolute; inset:0; z-index:40; display:none;
+  align-items:center; justify-content:center; overflow:hidden;
+}
+#alertOverlay.active { display:block; }
+
+.alert-veil {
+  position:absolute; inset:0; opacity:0;
+  background: radial-gradient(ellipse at center, rgba(20,0,0,.55) 0%, rgba(5,0,0,.92) 100%);
+}
+#alertOverlay.active .alert-veil { animation:veilIn 1.2s ease-out forwards, veilBreath 4s 1.2s ease-in-out infinite; }
+@keyframes veilIn { from{opacity:0} to{opacity:1} }
+@keyframes veilBreath { 0%,100%{opacity:1} 50%{opacity:.82} }
+
+.alert-scanline {
+  position:absolute; left:0; width:100%; height:80px; top:-100px;
+  background:linear-gradient(180deg, transparent, var(--prts-red-dim) 45%, rgba(227,51,51,.12) 55%, transparent);
+  opacity:0; pointer-events:none;
+}
+#alertOverlay.active .alert-scanline { animation:scanDown 1.6s .2s cubic-bezier(.4,0,.3,1) forwards; }
+@keyframes scanDown {
+  0% { top:-100px; opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { top:110%; opacity:0; }
+}
+
+.alert-frame { position:absolute; pointer-events:none; background:var(--prts-red); opacity:0; }
+#alertOverlay.active .alert-frame { animation:frameDraw .5s ease-out forwards; }
+#alertOverlay.active .alert-frame.h-top    { top:18%;  left:20%; height:1px; width:0; animation-delay:.5s; animation-name:frameH; }
+#alertOverlay.active .alert-frame.h-bottom { bottom:18%; left:20%; height:1px; width:0; animation-delay:.65s; animation-name:frameH; }
+#alertOverlay.active .alert-frame.v-left   { top:18%;  left:20%; width:1px; height:0; animation-delay:.8s; animation-name:frameV; }
+#alertOverlay.active .alert-frame.v-right  { top:18%;  right:20%; width:1px; height:0; animation-delay:.8s; animation-name:frameV; }
+@keyframes frameH { from{width:0; opacity:.6} to{width:60%; opacity:.6} }
+@keyframes frameV { from{height:0; opacity:.6} to{height:64%; opacity:.6} }
+
+.alert-content {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  opacity:0; text-align:center; padding:0 24px;
+}
+#alertOverlay.active .alert-content { animation:glitchIn .9s .55s steps(12) forwards; }
+@keyframes glitchIn {
+  0%   { opacity:0; transform:translateX(-14px); clip-path:inset(40% 0 40% 0); }
+  20%  { opacity:1; transform:translateX(10px);  clip-path:inset(10% 0 60% 0); }
+  40%  { transform:translateX(-6px); clip-path:inset(60% 0 5% 0); }
+  60%  { transform:translateX(4px);  clip-path:inset(0 0 0 0); }
+  100% { opacity:1; transform:none; clip-path:inset(0 0 0 0); }
+}
+
+.alert-code {
+  font-size:11px; letter-spacing:6px; color:var(--prts-red-dim);
+  margin-bottom:18px; font-family:monospace;
+}
+.alert-title {
+  font-size:clamp(18px, 3.2vw, 30px); letter-spacing:8px; font-weight:600;
+  color:#f4f4f4; text-align:center; line-height:1.9;
+  margin-bottom:14px;
+  animation:breath 3.2s ease-in-out infinite;
+}
+@keyframes breath {
+  0%,100% { text-shadow:0 0 2px rgba(227,51,51,.3); }
+  50%     { text-shadow:0 0 14px rgba(227,51,51,.55); }
+}
+.alert-title .rd { color:var(--prts-red); }
+
+.alert-sub {
+  font-size:12px; letter-spacing:4px; color:#a66; margin-bottom:44px;
+}
+
+.alert-actions { display:flex; gap:24px; }
+.alert-btn {
+  border:1px solid rgba(227,51,51,.5); color:rgba(238,180,180,.85);
+  padding:11px 38px; font-size:13px; letter-spacing:5px; cursor:pointer;
+  background:transparent; transition:all .35s; font-family:inherit;
+  position:relative;
+}
+.alert-btn::after {
+  content:''; position:absolute; left:0; bottom:0; width:0; height:1px;
+  background:var(--prts-red); transition:width .35s;
+}
+.alert-btn:hover { border-color:var(--prts-red); color:#fff; background:rgba(227,51,51,.08); }
+.alert-btn:hover::after { width:100%; }
+.alert-btn.primary { border-color:var(--prts-red); color:var(--prts-red); }
+.alert-btn.primary:hover { background:rgba(227,51,51,.14); box-shadow:0 0 24px rgba(227,51,51,.25); }
+
+#prtsHeader.alerting { border-bottom-color:var(--prts-red-dim); }
+#prtsHeader.alerting, #prtsHeader.alerting * { color:var(--prts-red) !important; }
+#prtsHeader.alerting .prts-dot { background:var(--prts-red); box-shadow:0 0 5px var(--prts-red); animation-duration:.6s; }
+
+#stage.dark::after {
+  content:""; position:absolute; inset:0; z-index:20; pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.15) 2px 4px);
+}
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--prts-gold-dim); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 背景音乐：优先读取同目录 bgm.mp3；没有则静默跳过 -->
+  <audio id="bgm" loop preload="auto">
+    <source src="bgm.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- 启动画面 -->
+  <div id="titleScreen">
+    <div class="title-mesh"></div>
+    <div class="title-castle">
+      <div class="tower"></div>
+      <div class="crown"></div>
+    </div>
+    <div class="title-back">RHODES ISLAND</div>
+    <div class="title-main">
+      <span>明</span><span>日</span><span>方</span><span>舟</span>
+    </div>
+    <div class="title-en">ARKNIGHTS</div>
+    <button id="startBtn">开 始 唤 醒</button>
+    <div class="title-footer">
+      <div class="logo-mark"></div>
+      <span>本卡由类脑社区 羡鱼 制作</span>
+      <span class="no-commercial">禁止商用</span>
+    </div>
+  </div>
+
+  <div id="bgmCtrl" title="背景音乐开关">♪</div>
+
+  <div id="prtsHeader">
+    <div class="prts-status-left">
+      <span>系统：PRTS</span>
+      <div class="prts-dot"></div>
+      <span>状态：在线</span>
+    </div>
+    <div class="prts-status-right">
+      <span id="sysTime">--:--:--</span>
+      <span>|</span>
+      <span>用户：访客</span>
+    </div>
+  </div>
+
+  <div id="rhodesIcon">
+    <svg viewBox="0 0 100 100"><path fill="#c9a227" d="M50 5 L95 90 H75 L50 42 L25 90 H5 Z"/><circle cx="50" cy="70" r="8" fill="#0a0a0a" stroke="#c9a227" stroke-width="4"/></svg>
+    <p>罗德岛 RHODES ISLAND — 点击屏幕继续</p>
+  </div>
+  
+  <img id="extimg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+  <canvas id="fb"></canvas>
+  
+  <div id="loaderWrap">
+    <div class="loader-half"><div class="loader-fill left" id="barL"></div></div>
+    <div class="loader-half"><div class="loader-fill right" id="barR"></div></div>
+    <div class="loader-text-mid" id="pMid">0%</div>
+  </div>
+  
+  <div id="codeRain"></div>
+
+  <div class="screen" id="s1"><div class="panel">
+    <h2 data-type="身份验证 · AUTHENTICATION"></h2>
+    <div id="authBox" style="min-height:40px;text-align:center;letter-spacing:2px"></div>
+    <div style="text-align:center"><div class="btn" id="authBtn">开始验证</div></div>
+  </div></div>
+
+  <div class="screen" id="s2"><div class="panel">
+    <h2 data-type="干员档案录入"></h2>
+    <div id="fields"></div>
+    <div class="hint" id="fieldHint"></div>
+  </div></div>
+
+  <div class="screen" id="s3"><div class="panel">
+    <h2 data-type="档案总览 · PROFILE"></h2>
+    <div id="summary"></div>
+    <div style="text-align:center">
+      <div class="btn" id="editBtn">编辑档案</div>
+      <div class="btn" id="nextBtn">确认档案 · 继续 ▶</div>
+    </div>
+  </div></div>
+
+  <div class="screen" id="s4"><div class="panel">
+    <h2 data-type="剧情切入时间点"></h2>
+    <div class="hint" style="margin-bottom:10px">仅可选择一项</div>
+    <div class="optlist" id="timeline"></div>
+    <div id="customTimeBox" style="display:none"><input type="text" id="customTime" placeholder="自定义时间点…"><div class="btn" id="customTimeOk">确认</div></div>
+    <div style="text-align:center; margin-top:15px;"><div class="btn btn-back" id="backFromTime">返回上一项</div></div>
+  </div></div>
+
+  <div class="screen" id="s5"><div class="panel">
+    <h2 data-type="降临地区"></h2>
+    <div class="optlist" id="regions"></div>
+    <div id="subArea" style="display:none"><h2 style="margin-top:14px" data-type="降临点"></h2><div class="optlist" id="spawns"></div></div>
+    <div id="customSpawnBox" style="display:none"><input type="text" id="customSpawn" placeholder="自定义降临点…"><div class="btn" id="customSpawnOk">确认</div></div>
+    <div style="text-align:center; margin-top:15px;"><div class="btn btn-back" id="backFromRegion">返回上一项</div></div>
+  </div></div>
+
+  <div class="screen" id="s6"><div class="panel">
+    <h2 data-type="部署确认"></h2>
+    <div id="finalSummary" style="font-size:12px"></div>
+    <div style="text-align:center; margin-top:20px;"><div class="btn" id="showWarn">发送</div></div>
+    <div style="text-align:center; margin-top:15px;"><div class="btn btn-back" id="backFromFinal">返回上一项</div></div>
+  </div></div>
+
+  <!-- PRTS 高级警报层 -->
+  <div id="alertOverlay">
+    <div class="alert-veil"></div>
+    <div class="alert-scanline"></div>
+    <div class="alert-frame h-top"></div>
+    <div class="alert-frame h-bottom"></div>
+    <div class="alert-frame v-left"></div>
+    <div class="alert-frame v-right"></div>
+    <div class="alert-content">
+      <div class="alert-code">PRTS // ALERT_LEVEL: CRITICAL // SIG-0773</div>
+      <div class="alert-title">检测到多名干员<span class="rd">生理状态异常</span><br>是否确认降临？</div>
+      <div class="alert-sub">— ORIGINIUM ARTS RESPONSE THRESHOLD EXCEEDED —</div>
+      <div class="alert-actions">
+        <div class="alert-btn" id="cancelDeploy">取消</div>
+        <div class="alert-btn primary" id="deployBtn">确认部署并发送</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="prtsFooter">
+    <span>PRTS v1.0.4 // RHODES ISLAND INTERNAL SYSTEM</span>
+    <span>© RHODES ISLAND PHARMACEUTICAL CO., LTD.</span>
+  </div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const stage=$('stage'),cv=$('fb'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){
+  const rect=stage.getBoundingClientRect();
+  W=cv.width=rect.width; H=cv.height=rect.height;
+}
+resize(); window.addEventListener('resize',resize);
+const esc=s=>String(s).replace(/</g,'&lt;');
+
+/* ---------- BGM ---------- */
+const bgm=$('bgm'),bgmCtrl=$('bgmCtrl');
+let bgmStarted=false;
+function tryPlayBGM(){
+  if(!bgmStarted){bgmStarted=true;bgm.volume=0.3;bgm.play().catch(()=>{bgmStarted=false;});}
+}
+bgmCtrl.onclick=()=>{
+  if(bgm.paused){tryPlayBGM();bgmCtrl.classList.remove('muted');}
+  else{bgm.pause();bgmCtrl.classList.add('muted');}
+};
+
+function updateTime(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0'),m=String(now.getMinutes()).padStart(2,'0'),s=String(now.getSeconds()).padStart(2,'0');
+  const el=$('sysTime'); if(el)el.textContent=h+':'+m+':'+s;
+}
+setInterval(updateTime,1000); updateTime();
+
+function typeText(el,text,speed=45){
+  el.textContent='';let i=0;
+  const iv=setInterval(()=>{el.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(iv)},speed);
+}
+
+/* ---------- 斐波那契球体 ---------- */
+const N=72,nodes=[];
+const GA=Math.PI*(3-Math.sqrt(5));
+for(let i=0;i<N;i++){
+  const y=1-(i/(N-1))*2, r=Math.sqrt(1-y*y), th=GA*i;
+  nodes.push({x:Math.cos(th)*r,y,z:Math.sin(th)*r,ox:0,oy:0,oz:0});
+}
+nodes.forEach(n=>{n.ox=(Math.random()-.5)*.05;n.oy=(Math.random()-.5)*.05;n.oz=(Math.random()-.5)*.05;n.p=Math.random()*6.28});
+const links=[];
+for(let i=0;i<N;i++){
+  const d=nodes.map((n,j)=>({j,d:Math.hypot(n.x-nodes[i].x,n.y-nodes[i].y,n.z-nodes[i].z)}))
+    .filter(o=>o.j!==i).sort((a,b)=>a.d-b.d).slice(0,3);
+  d.forEach(o=>{const k=[i,o.j].sort().join(',');if(!links.includes(k))links.push(k)});
+}
+let sphereOn=false,running=false;
+const sphereCX=0.5, sphereCY=0.45;
+function rot(p,ax,ay,az){
+  let[x,y,z]=p;
+  let c=Math.cos(ay),s=Math.sin(ay);[x,z]=[x*c+z*s,-x*s+z*c];
+  c=Math.cos(ax);s=Math.sin(ax);[y,z]=[y*c-z*s,y*s+z*c];
+  c=Math.cos(az);s=Math.sin(az);[x,y]=[x*c-y*s,x*s+y*c];
+  return[x,y,z];
+}
+function drawSphere(ts){
+  if(!sphereOn)return;
+  ctx.clearRect(0,0,W,H);
+  const R=Math.min(W,H)*0.28, cx=W*sphereCX, CY=H*sphereCY;
+  const a=ts*0.0003,b=ts*0.0004,c=ts*0.0002;
+  const pts=nodes.map(n=>{
+    const wx=n.x+n.ox*Math.sin(ts*.001+n.p), wy=n.y+n.oy*Math.cos(ts*.0013+n.p), wz=n.z+n.oz*Math.sin(ts*.0007+n.p);
+    const p=rot([wx,wy,wz],a,b,c);
+    return{x:cx+p[0]*R,y:CY+p[1]*R,z:p[2]};
+  });
+  ctx.strokeStyle='rgba(201,162,39,.25)';
+  links.forEach(k=>{const[i,j]=k.split(',').map(Number);
+    ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();});
+  pts.forEach(p=>{const s=2.5+p.z*1.5;
+    ctx.fillStyle='rgba(255,215,80,'+(.5+p.z*.5)+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,s,0,6.28);ctx.fill();
+    ctx.fillStyle='rgba(255,230,150,.9)';ctx.beginPath();ctx.arc(p.x,p.y,s*.4,0,6.28);ctx.fill();});
+  if(running)requestAnimationFrame(drawSphere);
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  const s=$(id);s.classList.add('on');s.scrollTop=0;
+  s.querySelectorAll('h2[data-type]').forEach(h=>{
+    typeText(h,h.dataset.textContent||h.dataset.type);
+  });
+}
+document.querySelectorAll('[data-type]').forEach(h=>{h.dataset.textContent=h.dataset.type});
+
+/* ===== 启动画面 ===== */
+$('startBtn').onclick=()=>{
+  tryPlayBGM();
+  bgmCtrl.classList.add('show');
+  const ts=$('titleScreen');
+  ts.classList.add('fade');
+  setTimeout(()=>ts.style.display='none',1300);
+  stage.classList.add('dark');
+  $('rhodesIcon').style.display='block';
+  $('prtsHeader').classList.add('show');
+  $('prtsFooter').classList.add('show');
+};
+
+/* ===== 图标阶段 → 球体 + 进度条 ===== */
+let clicked=false;
+stage.addEventListener('click',()=>{
+  if(clicked||$('rhodesIcon').style.display!=='block')return;
+  clicked=true;
+  tryPlayBGM();
+  resize();
+  $('extimg').style.display='block';$('extimg').style.opacity=1;
+  setTimeout(()=>$('extimg').style.opacity=0,50);
+  setTimeout(()=>$('extimg').remove(),1600);
+  $('rhodesIcon').style.top='45%';
+  $('rhodesIcon').querySelector('p').textContent='RHODES ISLAND TERMINAL';
+  setTimeout(()=>{
+    $('rhodesIcon').style.opacity=0;
+    sphereOn=true;running=true;requestAnimationFrame(drawSphere);
+    setTimeout(()=>{
+      $('loaderWrap').style.display='flex';
+      let p=0;
+      const iv=setInterval(()=>{
+        p+=2;
+        $('barL').style.width=p+'%';
+        $('barR').style.width=p+'%';
+        $('pMid').textContent=p+'%';
+        if(p>=100){
+          clearInterval(iv);
+          sphereOn=false;running=false;ctx.clearRect(0,0,W,H);
+          showCodeFlow();
+        }
+      },40);
+    },2000);
+  },1400);
+});
+
+/* ---------- 代码流动 ---------- */
+function showCodeFlow(){
+  const codeFlow=document.createElement('div');
+  codeFlow.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;font-size:14px;color:#c9a227;text-align:center;white-space:pre;letter-spacing:2px;line-height:1.6';
+  stage.appendChild(codeFlow);
+  const codeLines=[
+    '> 系统核心初始化中...',
+    '> 加载罗德岛数据库 [██████████] 100%',
+    '> 验证源石技艺适应性...',
+    '> 同步干员神经连接...',
+    '> 建立加密信道...',
+    '> 终端准备就绪，等待身份验证'
+  ];
+  let lineIndex=0;
+  const typeInterval=setInterval(()=>{
+    if(lineIndex<codeLines.length){
+      typeText(codeFlow,codeLines[lineIndex],30);
+      lineIndex++;
+    } else {
+      clearInterval(typeInterval);
+      setTimeout(()=>{
+        codeFlow.style.opacity=0;
+        codeFlow.style.transition='opacity 1s';
+        setTimeout(()=>{
+          codeFlow.remove();
+          $('loaderWrap').style.display='none';
+          show('s1');
+        },1000);
+      },1500);
+    }
+  },800);
+}
+
+/* ---------- 身份验证 ---------- */
+$('authBtn').onclick=()=>{
+  $('authBtn').style.display='none';
+  const box=$('authBox'),rain=$('codeRain');
+  rain.style.display='block';
+  rain.style.color='#c9a227';
+  const chars='ABCDEF0123456789<>[]{}/\\|#$%&*';
+  let step=0;
+  const iv=setInterval(()=>{
+    let s='';for(let i=0;i<8;i++){for(let j=0;j<24;j++)s+=chars[Math.random()*chars.length|0];s+='\n';}
+    rain.textContent=s;step++;
+    if(step>14){clearInterval(iv);rain.style.display='none';
+      box.style.color='#ff3333';
+      typeText(box,'> 匹配身份中… > [错误] 验证失败：未知访客 >> 请求手动录入身份档案',30);
+      setTimeout(()=>{show('s2');startFields();},2200);
+    }
+  },120);
+};
+
+/* ---------- 档案录入 ---------- */
+const FIELDS=[
+ ['姓名','text','系统正在为您分配代号...'],
+ ['性别','text','生理数据已记录，正在同步至医疗部...'],
+ ['种族','text','种族特征已分析，正在比对泰拉族群数据库...'],
+ ['源石技艺','textarea','源石技艺适应性检测完成。已同步至战术指导部，建议进行后续医疗评估。'],
+ ['过往经历','textarea','历史记录已归档。部分信息缺失，建议后续补充任务简报。'],
+ ['额外补充','textarea','附加信息已录入。档案安全等级：机密。仅限指挥高层访问。']
+];
+let fi=0,profile={};
+function startFields(){fi=0;profile={};$('fields').innerHTML='';renderField();}
+function renderField(){
+  if(fi>=FIELDS.length){setTimeout(()=>{show('s3');renderSummary();},600);return;}
+  const name=FIELDS[fi][0],type=FIELDS[fi][1],feedback=FIELDS[fi][2];
+  const block=document.createElement('div');
+  block.style.cssText='margin-bottom:6px;animation:fadeIn .6s';
+  block.innerHTML='<label style="color:#c9a227;font-size:13px;letter-spacing:2px"></label>'+
+    (type==='text'?'<input type="text" id="fIn">':'<textarea id="fIn"></textarea>')+
+    '<div style="text-align:center"><div class="btn" id="fOk">确认</div></div>'+
+    '<div class="feedback" id="fFeedback" style="display:none"></div>'+
+    '<div class="locked" id="fLock"></div>';
+  $('fields').appendChild(block);
+  typeText(block.querySelector('label'),'> '+name,50);
+  $('fieldHint').textContent='字段 '+(fi+1)+' / '+FIELDS.length;
+  block.scrollIntoView({behavior:'smooth'});
+  block.querySelector('#fOk').onclick=()=>{
+    const inp=block.querySelector('#fIn'),v=inp.value.trim();if(!v)return;
+    inp.disabled=true;block.querySelector('#fOk').style.display='none';
+    block.querySelector('#fFeedback').style.display='block';
+    typeText(block.querySelector('#fFeedback'),'> '+feedback,20);
+    setTimeout(()=>{
+      typeText(block.querySelector('#fLock'),'✓ 已锁定 · 无法更改',30);
+      profile[name]=v;
+      setTimeout(()=>{fi++;renderField();},1000);
+    },1500);
+  };
+}
+
+/* ---------- 总览 & 编辑 ---------- */
+let editing=false;
+function renderSummary(){
+  $('summary').innerHTML=Object.entries(profile).map(([k,v],i)=>
+    '<div class="rec" style="animation-delay:'+(i*.1)+'s"><b>'+esc(k)+'</b><br>'+
+    (editing?(FIELDS.find(f=>f[0]===k)[1]==='text'
+      ?'<input type="text" value="'+esc(v)+'" class="ed" data-k="'+k+'">'
+      :'<textarea class="ed" data-k="'+k+'">'+esc(v)+'</textarea>')
+      :esc(v))+'</div>').join('');
+}
+$('editBtn').onclick=()=>{
+  if(!editing){editing=true;$('editBtn').textContent='完成修改';renderSummary();}
+  else{
+    document.querySelectorAll('.ed').forEach(e=>profile[e.dataset.k]=e.value.trim());
+    editing=false;$('editBtn').textContent='编辑档案';renderSummary();
+  }
+};
+$('nextBtn').onclick=()=>{show('s4');buildTimeline();};
+
+/* ---------- 时间点 ---------- */
+const TIMES=[
+ ['泰拉历 1094 年','巴别塔内战 — 巴别塔与特雷西斯为首的萨卡兹势力决裂，组织在内战中走向终结，博士与凯尔希携核心成员撤离。'],
+ ['泰拉历 1096 年','前章 — 博士进入休眠，罗德岛制药公司初创，凯尔希主持大局，阿米娅逐渐崭露头角。'],
+ ['泰拉历 1098 年','主线序章～第一章 — 博士于切尔诺伯格废墟中被救出，罗德岛遭遇整合运动突袭，米莎事件爆发。'],
+ ['泰拉历 1098 年（末）','第二章～第四章 — 龙门近卫局与罗德岛联手，陈与星熊介入，塔露拉的整合运动阴影笼罩龙门。'],
+ ['泰拉历 1099 年','第五章～第八章 — 切尔诺伯格异变升级，罗德岛直视整合运动，塔露拉与博士在龙门深处对峙，真相初露。'],
+ ['泰拉历 1100 年','第九章～第十一章 — 风暴瞭望、覆潮之下、源石尘行动，维多利亚与萨尔贡的暗流开始涌动。'],
+ ['泰拉历 1100 年（后）','第十二章～十四章 — 慈悲灯塔、恶兆湍流，特雷西斯进军伦蒂尼姆，萨卡兹王庭之战全面爆发。'],
+ ['自定义','——']];
+let chosenTime=null,timelineBuilt=false;
+function buildTimeline(){
+  if(timelineBuilt)return;timelineBuilt=true;
+  TIMES.forEach(([t,d],i)=>{
+    const div=document.createElement('div');
+    div.style.animationDelay=(i*.08)+'s';
+    div.innerHTML='<b>'+t+'</b><div class="sub">'+d+'</div>';
+    div.onclick=()=>{
+      document.querySelectorAll('#timeline div').forEach(x=>x.classList.remove('sel'));
+      if(i===7){div.classList.add('sel');$('customTimeBox').style.display='block';}
+      else{chosenTime=t+'：'+d;$('customTimeBox').style.display='none';div.classList.add('sel');setTimeout(goRegions,500);}
+    };
+    $('timeline').appendChild(div);
+  });
+}
+$('customTimeOk').onclick=()=>{
+  const v=$('customTime').value.trim();if(!v)return;
+  chosenTime='自定义：'+v;$('customTimeBox').style.display='none';goRegions();
+};
+function goRegions(){show('s5');buildRegions();}
+
+$('backFromTime').onclick=()=>{show('s3');};
+$('backFromRegion').onclick=()=>{show('s4');};
+$('backFromFinal').onclick=()=>{show('s5');};
+
+/* ---------- 降临地点 ---------- */
+const REGIONS={
+ '罗德岛本舰': ['舰桥','控制中枢','凯尔希的办公室','博士的办公室','医疗部重症区','训练场'],
+ '龙门': ['近卫局总部','贫民窟','龙门码头','陈的办公室','魏彦吾的宅邸','龙门中央区'],
+ '整合运动': ['切尔诺伯格废墟','整合运动临时营地','塔露拉的指挥所','浮士德的狙击点','霜星与雪怪的营地','游击队据点'],
+ '乌萨斯': ['冻原矿场','感染区集中营','皇帝内卫据点','爱国者出身之地','乌萨斯军方前哨','旧贵族废墟'],
+ '卡西米尔': ['八号竞技场','无序矿区','大骑士领郊外','耀骑士临光宅邸','商业联合会大楼','监正会'],
+ '谢拉格': ['银灰家族宅邸','喀兰贸易总部','雪山修道院','固定城市核心区','蔓藤院','圣山'],
+ '莱塔尼亚': ['巫咒之地','双塔之一','选帝侯广场','古老学院','霍恩洛姆子爵领','巫王残余势力'],
+ '维多利亚': ['伦蒂尼姆外城墙','萨卡兹王庭前哨','蒸汽骑士遗迹','平民避难区','诸王长眠之所','维多利亚皇宫'],
+ '伊比利亚': ['盐风溶洞','深海教徒据点','灯塔守望台','废墟海岸','惩戒军前哨','大静谧'],
+ '炎国': ['尚蜀山道','大炎京城','天师府','地方官府','玉门城','岁相所在地'],
+ '萨尔贡': ['沙海遗迹','帕夏王宫','长生军要塞','部落聚居地','王酋宫殿','古老森林'],
+ '东国': ['日出之国','武士道场','阴阳寮','沿海港口','忍者村','将军府'],
+ '哥伦比亚': ['实验基地','13区废墟','联邦监狱','科技园区','总统府','独立军据点'],
+ '拉特兰': ['教堂广场','公证所','圣徒之墓','修道院','教皇厅','圣城'],
+ '卡兹戴尔': ['萨卡兹王庭','流浪者营地','古老废墟','雇佣兵公会','赦罪师据点','旧王宫'],
+ '雷姆必拓': ['矿工之都','工业废墟','反抗军据点','熔炉检修口','鲁道夫家族','沙漠遗迹'],
+ '米诺斯': ['神殿','竞技场','剧院','哲学家广场','矿场','古遗迹'],
+ '玻利瓦尔': ['联合政府','商业联盟','反叛军','雨林','高塔','矿场'],
+ '叙拉古': ['家族领地','黑帮据点','城市中心','港口','废弃仓库','地下赌场'],
+ '萨米': ['萨米部落','雪原','古老森林','冰原考察站','游牧部落','霜叶之地']
+};
+let chosenRegion=null,chosenSpawn=null,regionsBuilt=false;
+function buildRegions(){
+  if(regionsBuilt)return;regionsBuilt=true;
+  Object.keys(REGIONS).forEach((r,i)=>{
+    const div=document.createElement('div');
+    div.style.animationDelay=(i*.08)+'s';
+    div.innerHTML='<b>'+r+'</b>';
+    div.onclick=()=>{
+      document.querySelectorAll('#regions div').forEach(x=>x.classList.remove('sel'));
+      div.classList.add('sel');chosenRegion=r;chosenSpawn=null;
+      $('subArea').style.display='block';$('spawns').innerHTML='';
+      const options=REGIONS[r].concat(['自定义']);
+      options.forEach((s,j)=>{
+        const d2=document.createElement('div');
+        d2.textContent=s;
+        d2.style.animationDelay=(j*.06)+'s';
+        d2.onclick=e=>{
+          e.stopPropagation();
+          document.querySelectorAll('#spawns div').forEach(x=>x.classList.remove('sel'));
+          if(s==='自定义'){d2.classList.add('sel');$('customSpawnBox').style.display='block';}
+          else{chosenSpawn=s;$('customSpawnBox').style.display='none';d2.classList.add('sel');setTimeout(showFinal,400);}
+        };
+        $('spawns').appendChild(d2);
+      });
+    };
+    $('regions').appendChild(div);
+  });
+}
+$('customSpawnOk').onclick=()=>{
+  const v=$('customSpawn').value.trim();if(!v)return;
+  chosenSpawn='自定义：'+v;$('customSpawnBox').style.display='none';showFinal();
+};
+
+/* ---------- 部署确认 ---------- */
+function showFinal(){
+  show('s6');
+  $('finalSummary').innerHTML=
+    Object.entries(profile).map(([k,v])=>'<div class="rec"><b>'+esc(k)+'</b><br>'+esc(v)+'</div>').join('')+
+    '<div class="rec"><b>剧情切入</b><br>'+esc(chosenTime)+'</div><div class="rec"><b>降临点</b><br>'+chosenRegion+' · '+chosenSpawn+'</div>';
+}
+
+/* ---------- 高级警报触发 ---------- */
+$('showWarn').onclick=()=>{
+  const ov=$('alertOverlay');
+  ov.classList.remove('active');
+  void ov.offsetWidth;
+  ov.classList.add('active');
+  $('prtsHeader').classList.add('alerting');
+  playAlertTone();
+};
+$('cancelDeploy').onclick=()=>{
+  $('alertOverlay').classList.remove('active');
+  $('prtsHeader').classList.remove('alerting');
+};
+
+/* ---------- 低沉警报音 ---------- */
+function playAlertTone(){
+  try{
+    const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    [0, 0.45].forEach(delay=>{
+      const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+      osc.type='sine';
+      osc.frequency.setValueAtTime(220,audioCtx.currentTime+delay);
+      osc.frequency.exponentialRampToValueAtTime(165,audioCtx.currentTime+delay+0.35);
+      gain.gain.setValueAtTime(0.0001,audioCtx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.12,audioCtx.currentTime+delay+0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+delay+0.4);
+      osc.connect(gain);gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime+delay);
+      osc.stop(audioCtx.currentTime+delay+0.45);
+    });
+  }catch(e){}
+}
+
+$('deployBtn').onclick=()=>{
+  document.body.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#c9a227;letter-spacing:4px;background:#050505;">档案传输中… <span id="dots"></span></div>';
+  let n=0;const iv=setInterval(()=>{document.getElementById('dots').textContent='.'.repeat(++n%4)},300);
+  const payload={type:'character_profile',content:Object.assign({},profile,{切入点:chosenTime,降临地区:chosenRegion,降临点:chosenSpawn})};
+  setTimeout(()=>{
+    clearInterval(iv);
+    try{parent.postMessage({sillyTavern:true,payload},'*');}catch(e){}
+    console.log('发送给酒馆AI:',JSON.stringify(payload,null,2));
+    document.body.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#c9a227;letter-spacing:4px;text-align:center;background:#050505;">✓ 档案已发送至罗德岛终端<br>剧情即将开始…</div>';
+  },3000);
+};
+</script>
+</body>
+</html>
+</html>
+```
