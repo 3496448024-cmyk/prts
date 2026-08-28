@@ -17,10 +17,10 @@
 
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
 html, body { width:100%; height:100%; }
-body { 
-  background: var(--prts-dark); 
-  font-family:"Consolas","Courier New",monospace; 
-  color:#ccc;
+body { 
+  background: var(--prts-dark); 
+  font-family:"Consolas","Courier New",monospace; 
+  color:#ddd;
   position:fixed; inset:0;
   width:100%; height:100%;
   overflow:hidden;
@@ -33,7 +33,7 @@ body { 
 }
 #stage.dark {
   background: var(--prts-dark);
-  background-image: 
+  background-image: 
     linear-gradient(rgba(201, 162, 39, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(201, 162, 39, 0.03) 1px, transparent 1px);
   background-size: 30px 30px;
@@ -47,7 +47,7 @@ body { 
 }
 .title-mesh {
   position:absolute; top:0; left:0; width:100%; height:22%;
-  background-image: 
+  background-image: 
     linear-gradient(rgba(120,120,120,.15) 1px, transparent 1px),
     linear-gradient(90deg, rgba(120,120,120,.15) 1px, transparent 1px);
   background-size: 60px 60px;
@@ -108,13 +108,13 @@ body { 
   position:absolute; bottom:0; left:0; width:100%;
   height: 54px; background: #2a2a2a;
   display:flex; align-items:center; justify-content:center; gap:20px;
-  z-index:3; color:#999; font-size: 12px; letter-spacing:2px;
+  z-index:3; color:#bbb; font-size: 12px; letter-spacing:2px;
 }
 .title-footer .logo-mark {
   width: 20px; height: 20px; background:#c9a227;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
-.title-footer .no-commercial { color:#c96a5a; }
+.title-footer .no-commercial { color:#e08a7a; }
 
 /* ===== BGM 控制 ===== */
 #bgmCtrl {
@@ -127,7 +127,7 @@ body { 
 }
 #bgmCtrl.show { display:flex; }
 #bgmCtrl:hover { border-color:var(--prts-gold); box-shadow:0 0 10px rgba(201,162,39,.4); }
-#bgmCtrl.muted { color:#555; text-decoration:line-through; }
+#bgmCtrl.muted { color:#777; text-decoration:line-through; }
 
 /* ===== 状态栏 ===== */
 #prtsHeader {
@@ -145,7 +145,7 @@ body { 
   position:absolute; bottom:0; left:0; width:100%; height:30px;
   background:rgba(0,0,0,0.8); border-top:1px solid var(--prts-gold-dim);
   display:none; align-items:center; justify-content:space-between;
-  padding:0 20px; z-index:30; font-size:11px; color:#555;
+  padding:0 20px; z-index:30; font-size:11px; color:#999;
 }
 #prtsFooter.show { display:flex; }
 
@@ -156,7 +156,7 @@ body { 
 }
 #rhodesIcon svg { width:120px; height:120px; filter:drop-shadow(0 0 12px rgba(255,215,0,.6)); }
 #rhodesIcon p { color:#333; font-size:12px; letter-spacing:4px; margin-top:8px; }
-#stage.dark #rhodesIcon p { color:#999; }
+#stage.dark #rhodesIcon p { color:#ccc; }
 
 #extimg { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); max-width:70%; transition:opacity 1.5s; z-index:2; display:none; }
 canvas#fb { position:absolute; inset:0; z-index:4; pointer-events:none; }
@@ -214,22 +214,25 @@ h2::after { content:"_"; animation:cur 1s steps(1) infinite; }
 .btn::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(201,162,39,.2),transparent); transition:.5s; }
 .btn:hover::before { left:100%; }
 .btn:hover { background:var(--prts-gold); color:#000; box-shadow:0 0 15px rgba(201,162,39,.6); }
-.btn-back { border-color:#444; color:#666; }
-.btn-back:hover { border-color:#666; color:#aaa; background:#222; box-shadow:none; }
+.btn-back { border-color:#666; color:#999; }
+.btn-back:hover { border-color:#999; color:#ddd; background:#222; box-shadow:none; }
 
 input[type=text], textarea {
   width:100%; background:rgba(201,162,39,.05); border:1px solid var(--prts-border);
-  border-left:2px solid var(--prts-gold-dim); color:#eee; padding:8px 12px;
+  border-left:2px solid var(--prts-gold-dim); color:#f0f0f0; padding:8px 12px;
   font-family:inherit; font-size:13px; margin:6px 0; transition:border .3s,box-shadow .3s,background .3s;
 }
 input:focus, textarea:focus { outline:none; border-color:var(--prts-gold); border-left-color:var(--prts-gold); box-shadow:0 0 12px rgba(201,162,39,.35); background:rgba(201,162,39,.08); }
 textarea { height:70px; resize:vertical; }
-input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); }
+input:disabled, textarea:disabled { opacity:.5; border-color:var(--prts-gold); color:#e8e8e8; }
 
-.feedback { margin-top:12px; padding:10px; background:rgba(201,162,39,.05); border:1px dashed #666; font-size:12px; line-height:1.6; color:#999; animation:fadeIn .4s; }
+/* 亮色文字修正：黑底上所有正文内容统一高亮 */
+.panel, .panel div, .panel span, .panel label, .panel b, .panel p { color:#ddd; }
+.panel h2 { color:var(--prts-gold); }
+.feedback { margin-top:12px; padding:10px; background:rgba(201,162,39,.05); border:1px dashed #888; font-size:12px; line-height:1.6; color:#eee; animation:fadeIn .4s; }
 .locked { color:var(--prts-gold); font-size:11px; margin:2px 0 10px; animation:fadeIn .5s; }
-.hint { color:#7a7a7a; font-size:11px; margin-top:8px; text-align:center; }
-.rec { border:1px solid var(--prts-border); border-left:3px solid var(--prts-gold-dim); padding:12px; margin:6px 0; font-size:12px; transition:all .3s; animation:fadeIn .6s; background:rgba(255,255,255,0.01); }
+.hint { color:#aaa; font-size:11px; margin-top:8px; text-align:center; }
+.rec { border:1px solid var(--prts-border); border-left:3px solid var(--prts-gold-dim); padding:12px; margin:6px 0; font-size:12px; transition:all .3s; animation:fadeIn .6s; background:rgba(255,255,255,0.02); color:#ddd; }
 .rec:hover { border-color:var(--prts-gold); border-left-color:var(--prts-gold); background:rgba(201,162,39,.05); }
 .rec b { color:var(--prts-gold); letter-spacing:2px; display:block; margin-bottom:4px; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
@@ -237,11 +240,24 @@ input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); 
 .optlist div {
   cursor:pointer; padding:12px 15px; border:1px solid var(--prts-border);
   border-left:3px solid transparent; margin:5px 0; font-size:13px;
-  transition:all .2s; animation:fadeIn .5s backwards; position:relative; background:rgba(255,255,255,0.01);
+  transition:all .2s; animation:fadeIn .5s backwards; position:relative; background:rgba(255,255,255,0.02); color:#ddd;
 }
+.optlist div b { color:#eee; }
 .optlist div:hover { border-color:var(--prts-gold); border-left-color:var(--prts-gold); color:var(--prts-gold); background:rgba(201,162,39,.05); padding-left:20px; }
+.optlist div:hover b { color:var(--prts-gold); }
 .optlist div.sel { border-color:var(--prts-gold); border-left-color:var(--prts-gold); color:var(--prts-gold); background:rgba(201,162,39,.1); padding-left:20px; }
-.sub { font-size:11px; color:#888; margin-top:4px; }
+.optlist div.sel b { color:var(--prts-gold); }
+.sub { font-size:11px; color:#bbb; margin-top:4px; }
+
+/* ===== 代码雨（不再被面板遮挡） ===== */
+#codeRain {
+  display:none; position:absolute; inset:0; z-index:15;
+  pointer-events:none; overflow:hidden;
+  white-space:pre; text-align:left;
+  font-size:12px; line-height:1.3; padding:10px;
+  color:#c9a227; opacity:.85;
+  text-shadow:0 0 6px rgba(201,162,39,.4);
+}
 
 /* ===== PRTS 高级警报 ===== */
 #alertOverlay {
@@ -311,12 +327,12 @@ input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); 
 .alert-title .rd { color:var(--prts-red); }
 
 .alert-sub {
-  font-size:12px; letter-spacing:4px; color:#a66; margin-bottom:44px;
+  font-size:12px; letter-spacing:4px; color:#c99; margin-bottom:44px;
 }
 
 .alert-actions { display:flex; gap:24px; }
 .alert-btn {
-  border:1px solid rgba(227,51,51,.5); color:rgba(238,180,180,.85);
+  border:1px solid rgba(227,51,51,.5); color:rgba(238,180,180,.9);
   padding:11px 38px; font-size:13px; letter-spacing:5px; cursor:pointer;
   background:transparent; transition:all .35s; font-family:inherit;
   position:relative;
@@ -342,14 +358,14 @@ input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); 
 ::-webkit-scrollbar-thumb { background:var(--prts-gold-dim); }
 
 /* ===== 档案结果页 ===== */
-#resultBox { max-height:55vh; overflow-y:auto; }
+#sumBox { color:#eee; font-size:13px; letter-spacing:1px; text-align:left; border:1px solid #8a6e1b; padding:16px; max-width:90%; width:420px; line-height:1.9; white-space:pre-wrap; max-height:50vh; overflow-y:auto; }
 #copyBtn {
   display:inline-block; border:1px solid var(--prts-gold); color:var(--prts-gold);
   padding:12px 40px; cursor:pointer; letter-spacing:3px; font-size:14px;
   transition:all .3s; margin-top:16px;
 }
 #copyBtn:hover { background:var(--prts-gold); color:#000; box-shadow:0 0 15px rgba(201,162,39,.6); }
-#copyBtn.done { border-color:#4a4; color:#4a4; pointer-events:none; }
+#copyBtn.done { border-color:#5c5; color:#5c5; pointer-events:none; }
 </style>
 </head>
 <body>
@@ -399,21 +415,21 @@ input:disabled, textarea:disabled { opacity:.45; border-color:var(--prts-gold); 
     <svg viewBox="0 0 100 100"><path fill="#c9a227" d="M50 5 L95 90 H75 L50 42 L25 90 H5 Z"/><circle cx="50" cy="70" r="8" fill="#0a0a0a" stroke="#c9a227" stroke-width="4"/></svg>
     <p>罗德岛 RHODES ISLAND — 点击屏幕继续</p>
   </div>
-  
+  
   <img id="extimg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
   <canvas id="fb"></canvas>
-  
+  
   <div id="loaderWrap">
     <div class="loader-half"><div class="loader-fill left" id="barL"></div></div>
     <div class="loader-half"><div class="loader-fill right" id="barR"></div></div>
     <div class="loader-text-mid" id="pMid">0%</div>
   </div>
-  
+  
   <div id="codeRain"></div>
 
   <div class="screen" id="s1"><div class="panel">
     <h2 data-type="身份验证 · AUTHENTICATION"></h2>
-    <div id="authBox" style="min-height:40px;text-align:center;letter-spacing:2px"></div>
+    <div id="authBox" style="min-height:40px;text-align:center;letter-spacing:2px;color:#eee"></div>
     <div style="text-align:center"><div class="btn" id="authBtn">开始验证</div></div>
   </div></div>
 
@@ -616,7 +632,7 @@ stage.addEventListener('click',()=>{
 /* ---------- 代码流动 ---------- */
 function showCodeFlow(){
   const codeFlow=document.createElement('div');
-  codeFlow.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;font-size:14px;color:#c9a227;text-align:center;white-space:pre;letter-spacing:2px;line-height:1.6';
+  codeFlow.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:25;font-size:14px;color:#e0b83d;text-align:center;white-space:pre;letter-spacing:2px;line-height:1.6;text-shadow:0 0 8px rgba(201,162,39,.5)';
   stage.appendChild(codeFlow);
   const codeLines=[
     '> 系统核心初始化中...',
@@ -651,14 +667,13 @@ $('authBtn').onclick=()=>{
   $('authBtn').style.display='none';
   const box=$('authBox'),rain=$('codeRain');
   rain.style.display='block';
-  rain.style.color='#c9a227';
   const chars='ABCDEF0123456789<>[]{}/\\|#$%&*';
   let step=0;
   const iv=setInterval(()=>{
-    let s='';for(let i=0;i<8;i++){for(let j=0;j<24;j++)s+=chars[Math.random()*chars.length|0];s+='\n';}
+    let s='';for(let i=0;i<12;i++){for(let j=0;j<32;j++)s+=chars[Math.random()*chars.length|0];s+='\n';}
     rain.textContent=s;step++;
     if(step>14){clearInterval(iv);rain.style.display='none';
-      box.style.color='#ff3333';
+      box.style.color='#ff5555';
       typeText(box,'> 匹配身份中… > [错误] 验证失败：未知访客 >> 请求手动录入身份档案',30);
       setTimeout(()=>{show('s2');startFields();},2200);
     }
@@ -681,7 +696,7 @@ function renderField(){
   const name=FIELDS[fi][0],type=FIELDS[fi][1],feedback=FIELDS[fi][2];
   const block=document.createElement('div');
   block.style.cssText='margin-bottom:6px;animation:fadeIn .6s';
-  block.innerHTML='<label style="color:#c9a227;font-size:13px;letter-spacing:2px"></label>'+
+  block.innerHTML='<label style="color:#e0b83d;font-size:13px;letter-spacing:2px"></label>'+
     (type==='text'?'<input type="text" id="fIn">':'<textarea id="fIn"></textarea>')+
     '<div style="text-align:center"><div class="btn" id="fOk">确认</div></div>'+
     '<div class="feedback" id="fFeedback" style="display:none"></div>'+
@@ -862,11 +877,11 @@ $('deployBtn').onclick=()=>{
     '\n降临地点：'+chosenRegion+' · '+chosenSpawn;
 
   document.body.innerHTML=
-    '<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#c9a227;letter-spacing:4px;background:#050505;padding:20px;text-align:center;overflow-y:auto;">'+
+    '<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e0b83d;letter-spacing:4px;background:#050505;padding:20px;text-align:center;overflow-y:auto;">'+
     '<div style="font-size:18px;margin-bottom:16px;">✓ 档案已生成 · 部署完成</div>'+
-    '<div id="sumBox" style="color:#ccc;font-size:13px;letter-spacing:1px;text-align:left;border:1px solid #8a6e1b;padding:16px;max-width:90%;width:420px;line-height:1.9;white-space:pre-wrap;max-height:50vh;overflow-y:auto;"></div>'+
+    '<div id="sumBox"></div>'+
     '<div id="copyBtn">📋 复制档案内容</div>'+
-    '<p style="color:#666;font-size:12px;margin-top:12px;letter-spacing:2px;">复制后回到酒馆，粘贴到输入框发送给AI，剧情即开始</p>'+
+    '<p style="color:#aaa;font-size:12px;margin-top:12px;letter-spacing:2px;">复制后回到酒馆，粘贴到输入框发送给AI，剧情即开始</p>'+
     '</div>';
   document.getElementById('sumBox').textContent=text;
 
